@@ -6,7 +6,7 @@ ARG ARG_UID=1000
 ARG ARG_GID=1000
 
 FROM base AS build-arm64
-RUN echo "Preparing build of AnythingLLM image for arm64 architecture"
+RUN echo "Preparing build of CloudwiseGPT image for arm64 architecture"
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
@@ -32,20 +32,20 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 # Create a group and user with specific UID and GID
-RUN groupadd -g "$ARG_GID" anythingllm && \
-    useradd -l -u "$ARG_UID" -m -d /app -s /bin/bash -g anythingllm anythingllm && \
-    mkdir -p /app/frontend/ /app/server/ /app/collector/ && chown -R anythingllm:anythingllm /app
+RUN groupadd -g "$ARG_GID" cloudwisegpt && \
+    useradd -l -u "$ARG_UID" -m -d /app -s /bin/bash -g cloudwisegpt cloudwisegpt && \
+    mkdir -p /app/frontend/ /app/server/ /app/collector/ && chown -R cloudwisegpt:cloudwisegpt /app
 
 # Copy docker helper scripts
 COPY ./docker/docker-entrypoint.sh /usr/local/bin/
 COPY ./docker/docker-healthcheck.sh /usr/local/bin/
-COPY --chown=anythingllm:anythingllm ./docker/.env.example /app/server/.env
+COPY --chown=cloudwisegpt:cloudwisegpt ./docker/.env.example /app/server/.env
 
 # Ensure the scripts are executable
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh && \
     chmod +x /usr/local/bin/docker-healthcheck.sh
 
-USER anythingllm
+USER cloudwisegpt
 WORKDIR /app
 
 # Puppeteer does not ship with an ARM86 compatible build for Chromium
@@ -66,7 +66,7 @@ RUN echo "Done running arm64 specific installation steps"
 
 # amd64-specific stage
 FROM base AS build-amd64
-RUN echo "Preparing build of AnythingLLM image for non-ARM architecture"
+RUN echo "Preparing build of CloudwiseGPT image for non-ARM architecture"
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
@@ -92,14 +92,14 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 # Create a group and user with specific UID and GID
-RUN groupadd -g "$ARG_GID" anythingllm && \
-    useradd -l -u "$ARG_UID" -m -d /app -s /bin/bash -g anythingllm anythingllm && \
-    mkdir -p /app/frontend/ /app/server/ /app/collector/ && chown -R anythingllm:anythingllm /app
+RUN groupadd -g "$ARG_GID" cloudwisegpt && \
+    useradd -l -u "$ARG_UID" -m -d /app -s /bin/bash -g cloudwisegpt cloudwisegpt && \
+    mkdir -p /app/frontend/ /app/server/ /app/collector/ && chown -R cloudwisegpt:cloudwisegpt /app
 
 # Copy docker helper scripts
 COPY ./docker/docker-entrypoint.sh /usr/local/bin/
 COPY ./docker/docker-healthcheck.sh /usr/local/bin/
-COPY --chown=anythingllm:anythingllm ./docker/.env.example /app/server/.env
+COPY --chown=cloudwisegpt:cloudwisegpt ./docker/.env.example /app/server/.env
 
 # Ensure the scripts are executable
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh && \
@@ -111,14 +111,14 @@ RUN chmod +x /usr/local/bin/docker-entrypoint.sh && \
 
 # hadolint ignore=DL3006
 FROM build-${TARGETARCH} AS build
-RUN echo "Running common build flow of AnythingLLM image for all architectures"
+RUN echo "Running common build flow of CloudwiseGPT image for all architectures"
 
-USER anythingllm
+USER cloudwisegpt
 WORKDIR /app
 
 # Install & Build frontend layer
 FROM build AS frontend-build
-COPY --chown=anythingllm:anythingllm ./frontend /app/frontend/
+COPY --chown=cloudwisegpt:cloudwisegpt ./frontend /app/frontend/
 WORKDIR /app/frontend
 RUN yarn install --network-timeout 100000 && yarn cache clean
 RUN yarn build && \
@@ -139,7 +139,7 @@ WORKDIR /app
 # Install collector dependencies
 COPY ./collector/ ./collector/
 WORKDIR /app/collector
-ENV PUPPETEER_DOWNLOAD_BASE_URL=https://storage.googleapis.com/chrome-for-testing-public 
+ENV PUPPETEER_DOWNLOAD_BASE_URL=https://storage.googleapis.com/chrome-for-testing-public
 RUN yarn install --production --network-timeout 100000 && yarn cache clean
 
 # Compile Llama.cpp bindings for node-llama-cpp for this operating system.
@@ -148,16 +148,16 @@ USER root
 WORKDIR /app/server
 RUN npx --no node-llama-cpp download
 WORKDIR /app
-USER anythingllm
+USER cloudwisegpt
 
 # Since we are building from backend-build we just need to move built frontend into server/public
 FROM backend-build AS production-build
 WORKDIR /app
-COPY --chown=anythingllm:anythingllm --from=frontend-build /app/frontend/dist /app/server/public
+COPY --chown=cloudwisegpt:cloudwisegpt --from=frontend-build /app/frontend/dist /app/server/public
 USER root
-RUN chown -R anythingllm:anythingllm /app/server && \
-    chown -R anythingllm:anythingllm /app/collector
-USER anythingllm
+RUN chown -R cloudwisegpt:cloudwisegpt /app/server && \
+    chown -R cloudwisegpt:cloudwisegpt /app/collector
+USER cloudwisegpt
 
 # No longer needed? (deprecated)
 # WORKDIR /app/server
@@ -167,7 +167,7 @@ USER anythingllm
 
 # Setup the environment
 ENV NODE_ENV=production
-ENV ANYTHING_LLM_RUNTIME=docker
+ENV CLOUDWISE_GPT_RUNTIME=docker
 
 # Setup the healthcheck
 HEALTHCHECK --interval=1m --timeout=10s --start-period=1m \

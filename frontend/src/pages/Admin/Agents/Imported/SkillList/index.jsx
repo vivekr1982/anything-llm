@@ -18,7 +18,7 @@ export default function ImportedSkillList({
             target="_blank"
             className="text-white/80 hover:underline"
           >
-            AnythingLLM Agent Docs
+            CloudwiseGPT Agent Docs
           </a>
           .
         </p>

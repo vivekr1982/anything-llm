@@ -19,7 +19,7 @@ const exportOptions = {
     mimeType: "text/csv",
     fileExtension: "csv",
     filenameFunc: () => {
-      return `anythingllm-embed-chats-${new Date().toLocaleDateString()}`;
+      return `cloudwisegpt-embed-chats-${new Date().toLocaleDateString()}`;
     },
   },
   json: {
